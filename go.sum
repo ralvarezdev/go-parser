@@ -1,0 +1,4 @@
+github.com/ralvarezdev/go-flags v0.2.1 h1:zLhEZcb8jaaq5y+Gh7ot1NRaBLKvl0zyNA4st7dT5p0=
+github.com/ralvarezdev/go-flags v0.2.1/go.mod h1:pYw9H7NJ07Y5asZDC/EI5bpBLR0kdL2ISsh6X5ws+3s=
+github.com/ralvarezdev/go-logger v0.1.0 h1:i2AI1nlxU6Hizvk75Vc8wtFydiVrqIeeRbJwiuO/69A=
+github.com/ralvarezdev/go-logger v0.1.0/go.mod h1:v5OvFrkS+wsYNTCVegXWiRhBtcYrQJr4LDMDntvpAos=
