@@ -5,7 +5,11 @@ import (
 )
 
 // HideFileJSONTags hides the JSON tags in the specified file
-func HideFileJSONTags(filePath string, structsFieldsMapper *StructsFieldsMapper, mode *goflagsmode.Flag) error {
+func HideFileJSONTags(
+	filePath string,
+	structsFieldsMapper *StructsFieldsMapper,
+	mode *goflagsmode.Flag,
+) error {
 	// Check if the structs fields mapper is nil
 	if structsFieldsMapper == nil {
 		return NilStructsFieldsMapperError
@@ -27,7 +31,10 @@ func HideFileJSONTags(filePath string, structsFieldsMapper *StructsFieldsMapper,
 }
 
 // HideFilesJSONTags hides the JSON tags in the specified files
-func HideFilesJSONTags(goFileStructFieldsMapper *GoFileStructFieldsMapper) error {
+func HideFilesJSONTags(
+	goFileStructFieldsMapper *GoFileStructFieldsMapper,
+	mode *goflagsmode.Flag,
+) error {
 	// Check if the GoFileStructFieldsMapper is nil
 	if goFileStructFieldsMapper == nil {
 		return NilGoStructFieldsMapperError
@@ -36,7 +43,11 @@ func HideFilesJSONTags(goFileStructFieldsMapper *GoFileStructFieldsMapper) error
 	// Loop through the file paths
 	for filePath, structsFieldsMapper := range *goFileStructFieldsMapper {
 		// Hide the JSON tags in the file
-		if err := HideFileJSONTags(filePath, structsFieldsMapper); err != nil {
+		if err := HideFileJSONTags(
+			filePath,
+			structsFieldsMapper,
+			mode,
+		); err != nil {
 			return err
 		}
 	}
