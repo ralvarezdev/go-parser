@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	NilStructsFieldsMapperError  = errors.New("nil structs fields mapper")
-	NilGoStructFieldsMapperError = errors.New("nil go struct fields mapper")
-	NilStructJSONTagMapperError  = errors.New("nil struct json tag mapper")
+	ErrNilStructsFieldsMapper      = errors.New("structs fields mapper cannot be nil")
+	ErrNilFilesStructsFieldsMapper = errors.New("files structs fields mapper cannot be nil")
+	ErrNilStructsTagsMapper        = errors.New("structs tags mapper cannot be nil")
 )

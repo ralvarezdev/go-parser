@@ -5,6 +5,7 @@ import (
 )
 
 var (
-	NilFileSetError = errors.New("file set is nil")
-	NilASTNodeError = errors.New("ast node is nil")
+	ErrNilParser  = errors.New("go file parser cannot be nil")
+	ErrNilFileSet = errors.New("file set cannot be nil")
+	ErrNilASTNode = errors.New("ast node cannot be nil")
 )
