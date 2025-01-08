@@ -1,7 +1,6 @@
 package json
 
 import (
-	"fmt"
 	gologgermode "github.com/ralvarezdev/go-logger/mode"
 	gologgermodenamed "github.com/ralvarezdev/go-logger/mode/named"
 )
@@ -22,19 +21,19 @@ func NewLogger(header string, modeLogger gologgermode.Logger) (*Logger, error) {
 	return &Logger{logger: namedLogger}, nil
 }
 
-// PrintField prints a field
-func (l *Logger) PrintField(
-	structName string,
+// DetectedField prints a detected field
+func (l *Logger) DetectedField(
+	structTypeName string,
 	fieldName string,
 ) {
 	l.logger.Debug(
-		fmt.Sprintf("detected field on '%v'", structName),
-		fmt.Sprintf("field '%v'", fieldName),
+		"detected field on struct type: "+structTypeName,
+		"field name: "+fieldName,
 	)
 }
 
-// PrintFieldsNotUpdated prints the fields that were not updated
-func (l *Logger) PrintFieldsNotUpdated(
+// FieldsNotUpdated prints the fields that were not updated
+func (l *Logger) FieldsNotUpdated(
 	structJSONTagMapper *StructsTagsMapper,
 ) {
 	// Check if the structJSONTagMapper is nil
@@ -43,18 +42,20 @@ func (l *Logger) PrintFieldsNotUpdated(
 	}
 
 	// Iterate over the fields that haven't been updated
-	var structFields []string
-	for structName := range *structJSONTagMapper {
-		for fieldName := range (*structJSONTagMapper)[structName] {
+	for structTypeName := range *structJSONTagMapper {
+		var structFields []string
+
+		// Get the struct fields
+		for fieldName := range (*structJSONTagMapper)[structTypeName] {
 			structFields = append(
 				structFields,
-				fmt.Sprintf("field: '%s'", fieldName),
+				"field name: "+fieldName,
 			)
 		}
-	}
 
-	l.logger.Debug(
-		fmt.Sprintf("some fields haven't been updated"),
-		structFields...,
-	)
+		l.logger.Debug(
+			"some fields haven't been updated on struct: "+structTypeName,
+			structFields...,
+		)
+	}
 }

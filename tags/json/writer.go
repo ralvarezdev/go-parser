@@ -81,8 +81,11 @@ func (d *DefaultWriter) OverwriteTags(
 				return true
 			}
 
+			// Get the struct type name
+			structTypeName := ts.Name.Name
+
 			// Check if the struct name is in the map
-			fieldJSONTag, ok := (*structsTagsMapper)[ts.Name.Name]
+			fieldJSONTag, ok := (*structsTagsMapper)[structTypeName]
 			if !ok {
 				return true
 			}
@@ -91,16 +94,17 @@ func (d *DefaultWriter) OverwriteTags(
 			for _, field := range st.Fields.List {
 				for _, name := range field.Names {
 					// Check if the field name is in the map and get the new JSON tag
-					newJSONTag, ok := fieldJSONTag[name.Name]
+					fieldName := name.Name
+					newJSONTag, ok := fieldJSONTag[fieldName]
 					if !ok {
 						continue
 					}
 
 					// Print the struct and field name
 					if d.logger != nil {
-						d.logger.PrintField(
-							ts.Name.Name,
-							name.Name,
+						d.logger.DetectedField(
+							structTypeName,
+							fieldName,
 						)
 					}
 
@@ -123,7 +127,7 @@ func (d *DefaultWriter) OverwriteTags(
 					}
 
 					// Remove the field from the map
-					delete(fieldJSONTag, name.Name)
+					delete(fieldJSONTag, fieldName)
 				}
 			}
 
@@ -144,7 +148,7 @@ func (d *DefaultWriter) OverwriteTags(
 	if len(*structsTagsMapper) > 0 {
 		// Print the structs fields that haven't been updated
 		if d.logger != nil {
-			d.logger.PrintFieldsNotUpdated(structsTagsMapper)
+			d.logger.FieldsNotUpdated(structsTagsMapper)
 		}
 		return fmt.Errorf("failed to update all structs")
 	}
@@ -171,12 +175,12 @@ func (d *DefaultWriter) HideStructsTags(
 	structJSONTagMapper := StructsTagsMapper{}
 
 	// Loop through the struct fields
-	for structName, fields := range *structsFieldsMapper {
+	for structTypeName, fields := range *structsFieldsMapper {
 		fieldJSONTagMapper := FieldsTagsMapper{}
 		for _, field := range fields {
 			fieldJSONTagMapper[field] = "-"
 		}
-		structJSONTagMapper[structName] = fieldJSONTagMapper
+		structJSONTagMapper[structTypeName] = fieldJSONTagMapper
 	}
 	// Overwrite the JSON tags
 	return d.OverwriteTags(filePath, &structJSONTagMapper)
