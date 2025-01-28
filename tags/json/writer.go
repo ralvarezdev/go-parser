@@ -26,8 +26,8 @@ type (
 
 	// DefaultWriter is the struct for the default JSON tag writer
 	DefaultWriter struct {
-		parser goparser.Parser
 		logger *Logger
+		parser goparser.Parser
 	}
 )
 
@@ -41,7 +41,7 @@ func NewDefaultWriter(
 		return nil, goparser.ErrNilParser
 	}
 
-	return &DefaultWriter{logger: logger, parser: parser}, nil
+	return &DefaultWriter{logger, parser}, nil
 }
 
 // OverwriteTags overwrite the given structs fields JSON tags from the given Go file
