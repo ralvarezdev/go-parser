@@ -2,10 +2,11 @@ package json
 
 import (
 	"fmt"
-	goparser "github.com/ralvarezdev/go-parser"
 	"go/ast"
 	"go/token"
 	"regexp"
+
+	goparser "github.com/ralvarezdev/go-parser"
 )
 
 type (
