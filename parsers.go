@@ -10,24 +10,31 @@ import (
 )
 
 type (
-	// Parser is an interface to parse Go files
-	Parser interface {
-		ParseFile(filePath string) (*token.FileSet, *ast.File, error)
-		WriteFile(filePath string, fileSet *token.FileSet, node *ast.File) error
-		TraverseAST(node *ast.File, fn func(ast.Node) bool) error
-	}
-
 	// DefaultParser is the struct for the default Go parser
 	DefaultParser struct{}
 )
 
 // NewDefaultParser creates a new default Go parser
+//
+// Returns:
+//
+//   - *DefaultParser: the default Go parser
 func NewDefaultParser() *DefaultParser {
 	return &DefaultParser{}
 }
 
 // ParseFile parse the given Go file and return the file set and the AST node
-func (d *DefaultParser) ParseFile(filePath string) (
+//
+// Parameters:
+//
+//   - filePath string: the path to the Go file
+//
+// Returns:
+//
+//   - *token.FileSet: the file set
+//   - *ast.File: the AST node
+//   - error: if any error occurs
+func (d DefaultParser) ParseFile(filePath string) (
 	*token.FileSet,
 	*ast.File,
 	error,
@@ -43,7 +50,17 @@ func (d *DefaultParser) ParseFile(filePath string) (
 }
 
 // WriteFile write the given AST node to the given file path
-func (d *DefaultParser) WriteFile(
+//
+// Parameters:
+//
+//   - filePath string: the path to the Go file
+//   - fileSet *token.FileSet: the file set
+//   - node *ast.File: the AST node
+//
+// Returns:
+//
+//   - error: if any error occurs
+func (d DefaultParser) WriteFile(
 	filePath string,
 	fileSet *token.FileSet,
 	node *ast.File,
@@ -62,20 +79,29 @@ func (d *DefaultParser) WriteFile(
 		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer func(file *os.File) {
-		err := file.Close()
+		err = file.Close()
 		if err != nil {
 			panic(err)
 		}
 	}(file)
 
-	if err := printer.Fprint(file, fileSet, node); err != nil {
+	if err = printer.Fprint(file, fileSet, node); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 	return nil
 }
 
 // TraverseAST traverse the given AST node and call the given function for each node
-func (d *DefaultParser) TraverseAST(
+//
+// Parameters:
+//
+//   - node *ast.File: the AST node
+//   - fn func(ast.Node) bool: the function to call for each node
+//
+// Returns:
+//
+//   - error: if any error occurs
+func (d DefaultParser) TraverseAST(
 	node *ast.File,
 	fn func(ast.Node) bool,
 ) error {

@@ -14,5 +14,5 @@ type (
 	StructsFieldsMapper map[string]Fields
 
 	// FilesStructsFieldsMapper map the Go file path to the struct fields
-	FilesStructsFieldsMapper map[string]*StructsFieldsMapper
+	FilesStructsFieldsMapper map[string]StructsFieldsMapper
 )

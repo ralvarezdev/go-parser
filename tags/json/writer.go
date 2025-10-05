@@ -4,51 +4,62 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"log/slog"
 	"regexp"
 
 	goparser "github.com/ralvarezdev/go-parser"
 )
 
 type (
-	// Writer is the interface for writing JSON tags
-	Writer interface {
-		OverwriteTags(
-			filePath string,
-			structJSONTagMapper *StructsTagsMapper,
-		) error
-		HideStructsTags(
-			filePath string,
-			structsFieldsMapper *StructsFieldsMapper,
-		) error
-		HideFilesTags(
-			goFileStructFieldsMapper *FilesStructsFieldsMapper,
-		) error
-	}
-
 	// DefaultWriter is the struct for the default JSON tag writer
 	DefaultWriter struct {
-		logger *Logger
+		logger *slog.Logger
 		parser goparser.Parser
 	}
 )
 
 // NewDefaultWriter creates a new DefaultWriter struct
+//
+// Parameters:
+//
+//   - parser goparser.Parser: the Go parser to use
+//   - logger *slog.Logger: the logger to use, if nil, no logging is done
+//
+// Returns:
+//
+//   - *DefaultWriter: the default JSON tag writer
+//   - error: if any error occurs
 func NewDefaultWriter(
 	parser goparser.Parser,
-	logger *Logger,
+	logger *slog.Logger,
 ) (*DefaultWriter, error) {
 	// Check if the parser is nil
 	if parser == nil {
 		return nil, goparser.ErrNilParser
 	}
 
+	if logger != nil {
+		logger = logger.With(
+			slog.String("component", "tags_json_writer"),
+		)
+	}
+
 	return &DefaultWriter{logger, parser}, nil
 }
 
 // OverwriteTags overwrite the given structs fields JSON tags from the given Go file
-func (d *DefaultWriter) OverwriteTags(
+//
+// Parameters:
+//
+//   - filePath string: the path to the Go file
+//   - structsTagsMapper StructsTagsMapper: the mapper of struct names to their fields and new JSON tags
+//
+// Returns:
+//
+//   - error: if any error occurs
+func (d DefaultWriter) OverwriteTags(
 	filePath string,
-	structsTagsMapper *StructsTagsMapper,
+	structsTagsMapper StructsTagsMapper,
 ) error {
 	// Check if the structs tags mapper is nil
 	if structsTagsMapper == nil {
@@ -86,7 +97,7 @@ func (d *DefaultWriter) OverwriteTags(
 			structTypeName := ts.Name.Name
 
 			// Check if the struct name is in the map
-			fieldJSONTag, ok := (*structsTagsMapper)[structTypeName]
+			fieldJSONTag, ok := structsTagsMapper[structTypeName]
 			if !ok {
 				return true
 			}
@@ -102,12 +113,11 @@ func (d *DefaultWriter) OverwriteTags(
 					}
 
 					// Print the struct and field name
-					if d.logger != nil {
-						d.logger.DetectedField(
-							structTypeName,
-							fieldName,
-						)
-					}
+					DetectedField(
+						structTypeName,
+						fieldName,
+						d.logger,
+					)
 
 					// Modify the JSON tag
 					if field.Tag != nil {
@@ -135,7 +145,7 @@ func (d *DefaultWriter) OverwriteTags(
 			// Check if the struct has fields to update
 			numFields := len(fieldJSONTag)
 			if numFields == 0 {
-				delete(*structsTagsMapper, ts.Name.Name)
+				delete(structsTagsMapper, ts.Name.Name)
 				return false
 			}
 			return true
@@ -146,16 +156,13 @@ func (d *DefaultWriter) OverwriteTags(
 	}
 
 	// Check if all structs have been updated
-	if len(*structsTagsMapper) > 0 {
-		// Print the structs fields that haven't been updated
-		if d.logger != nil {
-			d.logger.FieldsNotUpdated(structsTagsMapper)
-		}
+	if len(structsTagsMapper) > 0 {
+		FieldsNotUpdated(structsTagsMapper, d.logger)
 		return fmt.Errorf("failed to update all structs")
 	}
 
 	// Write the modified AST back to the file
-	if err := d.parser.WriteFile(filePath, fileSet, node); err != nil {
+	if err = d.parser.WriteFile(filePath, fileSet, node); err != nil {
 		return err
 	}
 
@@ -163,9 +170,18 @@ func (d *DefaultWriter) OverwriteTags(
 }
 
 // HideStructsTags hides the JSON tags from the structs in the specified file
-func (d *DefaultWriter) HideStructsTags(
+//
+// Parameters:
+//
+//   - filePath string: the path to the Go file
+//   - structsFieldsMapper StructsFieldsMapper: the mapper of struct names to their fields
+//
+// Returns:
+//
+//   - error: if any error occurs
+func (d DefaultWriter) HideStructsTags(
 	filePath string,
-	structsFieldsMapper *StructsFieldsMapper,
+	structsFieldsMapper StructsFieldsMapper,
 ) error {
 	// Check if the structs fields mapper is nil
 	if structsFieldsMapper == nil {
@@ -176,7 +192,7 @@ func (d *DefaultWriter) HideStructsTags(
 	structJSONTagMapper := StructsTagsMapper{}
 
 	// Loop through the struct fields
-	for structTypeName, fields := range *structsFieldsMapper {
+	for structTypeName, fields := range structsFieldsMapper {
 		fieldJSONTagMapper := FieldsTagsMapper{}
 		for _, field := range fields {
 			fieldJSONTagMapper[field] = "-"
@@ -184,12 +200,20 @@ func (d *DefaultWriter) HideStructsTags(
 		structJSONTagMapper[structTypeName] = fieldJSONTagMapper
 	}
 	// Overwrite the JSON tags
-	return d.OverwriteTags(filePath, &structJSONTagMapper)
+	return d.OverwriteTags(filePath, structJSONTagMapper)
 }
 
 // HideFilesTags hides the JSON tags from the structs in the specified files
-func (d *DefaultWriter) HideFilesTags(
-	filesStructsFieldsMapper *FilesStructsFieldsMapper,
+//
+// Parameters:
+//
+//   - filesStructsFieldsMapper FilesStructsFieldsMapper: the mapper of Go file paths to their struct fields
+//
+// Returns:
+//
+//   - error: if any error occurs
+func (d DefaultWriter) HideFilesTags(
+	filesStructsFieldsMapper FilesStructsFieldsMapper,
 ) error {
 	// Check if the FilesStructsFieldsMapper is nil
 	if filesStructsFieldsMapper == nil {
@@ -197,7 +221,7 @@ func (d *DefaultWriter) HideFilesTags(
 	}
 
 	// Loop through the file paths
-	for filePath, structsFieldsMapper := range *filesStructsFieldsMapper {
+	for filePath, structsFieldsMapper := range filesStructsFieldsMapper {
 		// Hide the JSON tags from the structs in the given file
 		if err := d.HideStructsTags(
 			filePath,

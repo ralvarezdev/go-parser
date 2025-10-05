@@ -1,40 +1,39 @@
 package json
 
 import (
-	gologgermode "github.com/ralvarezdev/go-logger/mode"
-	gologgermodenamed "github.com/ralvarezdev/go-logger/mode/named"
+	"log/slog"
 )
 
-// Logger is the JWT validator logger
-type Logger struct {
-	logger gologgermodenamed.Logger
-}
-
-// NewLogger creates a new JWT validator logger
-func NewLogger(header string, modeLogger gologgermode.Logger) (*Logger, error) {
-	// Initialize the mode named logger
-	namedLogger, err := gologgermodenamed.NewDefaultLogger(header, modeLogger)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Logger{logger: namedLogger}, nil
-}
-
 // DetectedField prints a detected field
-func (l *Logger) DetectedField(
+//
+// Parameters:
+//
+//   - structTypeName: the name of the struct type
+//   - fieldName: the name of the field
+//   - logger: the logger to use, if nil, no logging is done
+func DetectedField(
 	structTypeName string,
 	fieldName string,
+	logger *slog.Logger,
 ) {
-	l.logger.Debug(
-		"detected field on struct type: "+structTypeName,
-		"field name: "+fieldName,
-	)
+	if logger != nil {
+		logger.Debug(
+			"detected field on struct type",
+			slog.String("struct_type_name", structTypeName),
+			slog.String("field_name", fieldName),
+		)
+	}
 }
 
 // FieldsNotUpdated prints the fields that were not updated
-func (l *Logger) FieldsNotUpdated(
-	structJSONTagMapper *StructsTagsMapper,
+//
+// Parameters:
+//
+//   - structJSONTagMapper: the mapper of struct names to their fields and JSON tags
+//   - logger: the logger to use, if nil, no logging is done
+func FieldsNotUpdated(
+	structJSONTagMapper StructsTagsMapper,
+	logger *slog.Logger,
 ) {
 	// Check if the structJSONTagMapper is nil
 	if structJSONTagMapper == nil {
@@ -42,20 +41,23 @@ func (l *Logger) FieldsNotUpdated(
 	}
 
 	// Iterate over the fields that haven't been updated
-	for structTypeName := range *structJSONTagMapper {
+	for structTypeName := range structJSONTagMapper {
 		var structFields []string
 
 		// Get the struct fields
-		for fieldName := range (*structJSONTagMapper)[structTypeName] {
+		for fieldName := range structJSONTagMapper[structTypeName] {
 			structFields = append(
 				structFields,
-				"field name: "+fieldName,
+				fieldName,
 			)
 		}
 
-		l.logger.Debug(
-			"some fields haven't been updated on struct: "+structTypeName,
-			structFields...,
-		)
+		if logger != nil {
+			logger.Debug(
+				"some fields haven't been updated on struct",
+				slog.String("struct_type_name", structTypeName),
+				slog.Any("struct_fields", structFields),
+			)
+		}
 	}
 }
