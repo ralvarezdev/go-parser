@@ -18,7 +18,7 @@ func DetectedField(
 ) {
 	if logger != nil {
 		logger.Debug(
-			"detected field on struct type",
+			"Detected field on struct type",
 			slog.String("struct_type_name", structTypeName),
 			slog.String("field_name", fieldName),
 		)
@@ -54,7 +54,7 @@ func FieldsNotUpdated(
 
 		if logger != nil {
 			logger.Debug(
-				"some fields haven't been updated on struct",
+				"Some fields haven't been updated on struct",
 				slog.String("struct_type_name", structTypeName),
 				slog.Any("struct_fields", structFields),
 			)
