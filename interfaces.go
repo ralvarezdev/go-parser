@@ -1,4 +1,4 @@
-package go_parser
+package goparser
 
 import (
 	"go/ast"

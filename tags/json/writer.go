@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/token"
 	"log/slog"
-	"regexp"
 
 	goparser "github.com/ralvarezdev/go-parser"
 )
@@ -66,12 +65,6 @@ func (d DefaultWriter) OverwriteTags(
 		return ErrNilStructsTagsMapper
 	}
 
-	// Compile the regex pattern to match any content inside JSON tag
-	regex, err := regexp.Compile(`json:"[^"]*"`)
-	if err != nil {
-		return fmt.Errorf("failed to compile regex: %w", err)
-	}
-
 	// Parse the Go file
 	fileSet, node, err := d.parser.ParseFile(filePath)
 	if err != nil {
@@ -107,8 +100,8 @@ func (d DefaultWriter) OverwriteTags(
 				for _, name := range field.Names {
 					// Check if the field name is in the map and get the new JSON tag
 					fieldName := name.Name
-					newJSONTag, ok := fieldJSONTag[fieldName]
-					if !ok {
+					newJSONTag, tagOk := fieldJSONTag[fieldName]
+					if !tagOk {
 						continue
 					}
 
@@ -124,16 +117,16 @@ func (d DefaultWriter) OverwriteTags(
 						tag := field.Tag.Value
 
 						// Replace the matched content
-						newTag := regex.ReplaceAllString(
+						newTag := overwriteTagsRegExp.ReplaceAllString(
 							tag,
-							fmt.Sprintf(`json:"%s"`, newJSONTag),
+							fmt.Sprintf(`json:"%q"`, newJSONTag),
 						)
 
 						field.Tag.Value = newTag
 					} else {
 						field.Tag = &ast.BasicLit{
 							Kind:  token.STRING,
-							Value: fmt.Sprintf("`json:\"%s\"`", newJSONTag),
+							Value: fmt.Sprintf("`json:\"%q\"`", newJSONTag),
 						}
 					}
 
@@ -162,11 +155,7 @@ func (d DefaultWriter) OverwriteTags(
 	}
 
 	// Write the modified AST back to the file
-	if err = d.parser.WriteFile(filePath, fileSet, node); err != nil {
-		return err
-	}
-
-	return nil
+	return d.parser.WriteFile(filePath, fileSet, node)
 }
 
 // HideStructsTags hides the JSON tags from the structs in the specified file
